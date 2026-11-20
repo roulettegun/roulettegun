@@ -1,47 +1,64 @@
 # Revan (@roulettegun)
 
-Systems tooling, Luau/Lua static analysis, and macOS runtime debugging.
+I build macOS developer tools, Luau/Lua code analyzers, and Roblox debugging utilities.
 
-- **Portfolio & Live Repository Ledger:** [roulettegun.github.io](https://roulettegun.github.io)
-- **Web:** [pretty.rich/revan](https://pretty.rich/revan) · `@revanganteng.site`
-- **PyPI:** [pypi.org/project/rcdebug](https://pypi.org/project/rcdebug/)
-- **Contact:** [oscrevan@gmail.com](mailto:oscrevan@gmail.com)
+[![Portfolio](https://img.shields.io/badge/Portfolio-0D1117?style=for-the-badge&logo=github&logoColor=white)](https://roulettegun.github.io)
+[![Web](https://img.shields.io/badge/pretty.rich%2Frevan-111111?style=for-the-badge&logo=safari&logoColor=white)](https://pretty.rich/revan)
+[![PyPI rcdebug](https://img.shields.io/badge/PyPI_rcdebug-3775A9?style=for-the-badge&logo=pypi&logoColor=white)](https://pypi.org/project/rcdebug/)
+[![Contact](https://img.shields.io/badge/oscrevan%40gmail.com-D14836?style=for-the-badge&logo=gmail&logoColor=white)](mailto:oscrevan@gmail.com)
+
+![Python 3](https://img.shields.io/badge/Python_3-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![Luau / Lua](https://img.shields.io/badge/Luau_%2F_Lua-2C2D72?style=for-the-badge&logo=lua&logoColor=white)
+![macOS](https://img.shields.io/badge/macOS-000000?style=for-the-badge&logo=apple&logoColor=white)
+![Swift](https://img.shields.io/badge/Swift-F05138?style=for-the-badge&logo=swift&logoColor=white)
+![POSIX Shell](https://img.shields.io/badge/POSIX_Shell-121011?style=for-the-badge&logo=gnu-bash&logoColor=white)
 
 ---
 
 ### `[01]` Flagship Tool: [rcdebug](https://github.com/roulettegun/rcdebug)
 
-macOS command-line debugger and security auditor for Roblox games (`pip install rcdebug`). Zero external dependencies; built strictly on the Python 3 standard library.
+[![PyPI version](https://badgen.net/pypi/v/rcdebug)](https://pypi.org/project/rcdebug/)
+[![Python compatibility](https://badgen.net/pypi/python/rcdebug)](https://pypi.org/project/rcdebug/)
+![Dependencies: Zero](https://badgen.net/badge/dependencies/zero/green)
+![Platform: macOS](https://badgen.net/badge/platform/macOS/black)
+[![Last commit](https://badgen.net/github/last-commit/roulettegun/rcdebug)](https://github.com/roulettegun/rcdebug/commits)
 
-- **Live Client Bridge (`--client`):** Binds a local HTTP/WebSocket listener on `127.0.0.1:8765` (with automatic fallback to `8766`), copies the client diagnostic payload to the macOS clipboard via `pbcopy`, and tails `~/Library/Logs/Roblox/*_last.log` for `[rcdebug-wire:*]` frames.
-- **Static Server & StudioMCP Audit (`--server`):** Scans local `.luau`/`.lua` scripts, `.rbxlx` place files, or an open Roblox Studio session over StudioMCP for exposed remotes, unanchored physics parts, `loadstring()` sinks, missing `ProcessReceipt` deduplication, and unvalidated `OnServerEvent` listeners.
-- **120,000-Flaw `mmap` Index (`--catalog`):** Sub-10ms binary offset search across `RCD-000001` through `RCD-120000` plus 120 static Luau diagnostic probes (`LDP-001` to `LDP-120`).
+A macOS command-line debugger and security scanner for Roblox games (`pip install rcdebug`). It uses only the Python 3 standard library, so you can install and run it without third-party packages.
+
+- **Live Game Inspection (`--client`):** Starts a local server on `127.0.0.1:8765` (or `8766` if busy), copies a small diagnostic script to your macOS clipboard via `pbcopy`, and watches your local Roblox logs (`~/Library/Logs/Roblox/*_last.log`) to catch errors and events while you play.
+- **Place & Script Security Check (`--server`):** Checks `.luau` and `.lua` scripts, `.rbxlx` place files, or an active Roblox Studio session for common security mistakes. It flags unprotected remote events, unanchored parts, unsafe `loadstring()` calls, and purchase handlers (`ProcessReceipt`) that could process the same receipt twice.
+- **Fast Flaw Lookup (`--catalog`):** Searches a built-in index of 120,000 known flaw patterns (`RCD-000001` to `RCD-120000`) and 120 Luau code checks (`LDP-001` to `LDP-120`) in under 10 milliseconds using memory-mapped files (`mmap`).
 
 ---
 
 ### `[02]` Static Analysis: [LUA-Deobfuscater](https://github.com/roulettegun/LUA-Deobfuscater)
 
-Zero-dependency Python static unpacker and constant-folder for obfuscated Luau and Lua 5.1 scripts (`lua_deobfuscator.py`). Tokenizes and resolves obfuscated scripts without running untrusted code:
+![Runtime: Python 3](https://badgen.net/badge/runtime/Python%203/blue)
+![Dependencies: Zero](https://badgen.net/badge/dependencies/zero/green)
+![Execution: Static Only](https://badgen.net/badge/execution/static-only/orange)
+[![Last commit](https://badgen.net/github/last-commit/roulettegun/LUA-Deobfuscater)](https://github.com/roulettegun/LUA-Deobfuscater/commits)
 
-| Engine | Target Pattern | Resolution Method |
+A Python tool (`lua_deobfuscator.py`) that unpacks and cleans up obfuscated Luau and Lua 5.1 scripts. It reads and simplifies the code directly on disk without running it, keeping your machine safe from untrusted scripts:
+
+| Engine | What It Targets | How It Cleans the Code |
 | :--- | :--- | :--- |
-| `prometheus_vm` | Prometheus Medium / Strong VM presets | Solves custom Base64/ASCII85 Layer-1 tables, extracts 45-bit LCG + mod 257 PRNG constants, and annotates VM dispatch leaves. |
-| `prometheus_strings` | Prometheus Weak / Constant-Array presets | Solves Layer-1 tables, inlines index offsets, strips decoder headers, and folds arithmetic expressions. |
-| `rolling_xor_table` | IIFE Rolling-XOR tables (`bit32.bxor`, `(K + i + j) % 256`) | Recovers rolling XOR keys with UTF-8 scoring fallback, prunes honeypot `do ... end` blocks, and inlines string arrays. |
-| `seeded_prng_cipher` | Custom pure-Lua LCG or `math.randomseed(S)` | Resolves custom LCG loops and simulates Luau's bit-exact 64-bit PCG32 PRNG engine. |
-| `loadstring_packer` | `loadstring("...")()`, `string.char(...)` payloads | Unwraps nested `loadstring` layers and byte XOR/add/sub loops up to 5 layers deep. |
-| `constant_array` | String array queue rotation packers | Simulates `table.insert` / `table.remove` rotations and resolves index offsets. |
-| `math_expression` | Bitwise, string-byte, and arithmetic obfuscation | Precedence-exact constant folding for `math.*`, `bit32.*`, `string.*`, and concatenations. |
+| `prometheus_vm` | Prometheus Medium / Strong VM presets | Decodes scrambled Base64/ASCII85 lookup tables, recovers random number generator constants, and labels virtual machine instructions. |
+| `prometheus_strings` | Prometheus Weak / Constant-Array presets | Decodes string tables, puts hidden strings back into their actual code positions, removes decoder boilerplate, and simplifies math expressions. |
+| `rolling_xor_table` | Rolling-XOR string tables (`bit32.bxor`) | Finds the XOR encryption keys automatically, strips out fake trap code blocks (`do ... end`), and restores readable strings. |
+| `seeded_prng_cipher` | Seeded random number ciphers (`math.randomseed`) | Solves custom random number loops and simulates Luau's 64-bit `PCG32` random generator to decrypt scrambled text. |
+| `loadstring_packer` | Nested `loadstring("...")()` and `string.char(...)` wrappers | Peels back up to 5 layers of nested `loadstring` wrappers and byte-level math loops. |
+| `constant_array` | Shuffled string arrays | Reverses `table.insert` and `table.remove` array rotations to put strings back in their real order. |
+| `math_expression` | Scrambled math and bitwise formulas | Calculates `math.*`, `bit32.*`, `string.*`, and joined strings ahead of time and replaces them with plain values. |
 
 ---
 
-### `[03]` Public Repository & Gist Index
+### `[03]` Public Repositories & Gists
 
-| Repository | Stack | Summary |
-| :--- | :--- | :--- |
-| [roulettegun/rcdebug](https://github.com/roulettegun/rcdebug) | Python 3 / Luau | macOS command-line debugger and security auditor for Roblox games ([PyPI](https://pypi.org/project/rcdebug/)). |
-| [roulettegun/LUA-Deobfuscater](https://github.com/roulettegun/LUA-Deobfuscater) | Python 3 / Luau | Static unpacker, PRNG solver, and constant-folder for obfuscated Lua 5.1 and Luau scripts. |
-| [roulettegun/SillyRAT-Remastered](https://github.com/roulettegun/SillyRAT-Remastered) | Python 3 | macOS-compatible ("Darwin") remaster fixing payload generation, `recv_data()` spin loops, and terminal color output. |
-| [roulettegun/WristTok](https://github.com/roulettegun/WristTok) | Swift (watchOS) | Apple Watch client built around a scraped TikTok API. |
-| [roulettegun/antigravity-skills](https://github.com/roulettegun/antigravity-skills) | Markdown / Skills | Curated collection of agent skills for Google Antigravity. |
-| [gist:crossover.sh](https://gist.github.com/roulettegun/4d5ea45bc5afce9c71404358a3cd4a66) | POSIX Shell | macOS shell utility script (`crossover.sh`). |
+| Project | Status / Badges | Stack | What It Does |
+| :--- | :--- | :--- | :--- |
+| [roulettegun/rcdebug](https://github.com/roulettegun/rcdebug) | [![PyPI](https://badgen.net/pypi/v/rcdebug)](https://pypi.org/project/rcdebug/) [![Commits](https://badgen.net/github/commits/roulettegun/rcdebug)](https://github.com/roulettegun/rcdebug) | Python 3 / Luau | macOS command-line debugger and security scanner for Roblox games. |
+| [roulettegun/LUA-Deobfuscater](https://github.com/roulettegun/LUA-Deobfuscater) | [![Commits](https://badgen.net/github/commits/roulettegun/LUA-Deobfuscater)](https://github.com/roulettegun/LUA-Deobfuscater) ![Static](https://badgen.net/badge/mode/static/orange) | Python 3 / Luau | Unpacks and simplifies obfuscated Lua 5.1 and Luau scripts without running them. |
+| [roulettegun/SillyRAT-Remastered](https://github.com/roulettegun/SillyRAT-Remastered) | [![Commits](https://badgen.net/github/commits/roulettegun/SillyRAT-Remastered)](https://github.com/roulettegun/SillyRAT-Remastered) ![macOS](https://badgen.net/badge/platform/macOS/black) | Python 3 | macOS-compatible update that fixes payload building, high-CPU network loops (`recv_data()`), and terminal colors. |
+| [roulettegun/WristTok](https://github.com/roulettegun/WristTok) | [![Commits](https://badgen.net/github/commits/roulettegun/WristTok)](https://github.com/roulettegun/WristTok) ![watchOS](https://badgen.net/badge/platform/watchOS/orange) | Swift | Apple Watch app built around a custom TikTok feed scraper. |
+| [roulettegun/antigravity-skills](https://github.com/roulettegun/antigravity-skills) | [![Commits](https://badgen.net/github/commits/roulettegun/antigravity-skills)](https://github.com/roulettegun/antigravity-skills) ![Skills](https://badgen.net/badge/format/SKILL.md/purple) | Markdown | Collection of workflow and coding skills for Google Antigravity. |
+| [gist:crossover.sh](https://gist.github.com/roulettegun/4d5ea45bc5afce9c71404358a3cd4a66) | ![Gist](https://badgen.net/badge/gist/crossover.sh/black) | POSIX Shell | macOS shell utility script for CrossOver. |
